@@ -57,6 +57,25 @@ func sccUsers(t *testing.T, scc *unstructured.Unstructured) []string {
 	return users
 }
 
+func TestComputeDomainDaemonSCCPriority(t *testing.T) {
+	s := newTestDRAState(t)
+	cr := sampleGPUCluster()
+	cr.Spec.DRADriver.ComputeDomains.Enabled = new(true)
+	objs, err := s.getManifestObjects(context.Background(), cr, draSupportedOpenshiftCatalog())
+	require.NoError(t, err)
+	scc := findSCC(t, objs, "nvidia-dra-driver")
+	require.NotNil(t, scc)
+	require.Contains(t, sccUsers(t, scc), "system:serviceaccount:test-operator:compute-domain-daemon-service-account")
+	priority, found, err := unstructured.NestedInt64(scc.Object, "priority")
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Greater(t, priority, int64(0), "prefer the DRA SCC over restricted-v2's default priority")
+	strategy, found, err := unstructured.NestedString(scc.Object, "runAsUser", "type")
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Equal(t, "RunAsAny", strategy, "preserve the IMEX daemon's image user")
+}
+
 func TestGPUClusterOperandSCCs(t *testing.T) {
 	testCases := []struct {
 		name    string

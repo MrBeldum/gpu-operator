@@ -21,7 +21,7 @@ metadata:
     kubernetes.io/description: 'Grants the NVIDIA DRA driver kubelet-plugin and ComputeDomain daemons the privileged and
       host access it needs on OpenShift.'
   name: nvidia-dra-driver
-priority: null
+priority: 10
 readOnlyRootFilesystem: false
 requiredDropCapabilities: null
 runAsUser:
